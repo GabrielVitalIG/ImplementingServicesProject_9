@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class OrganizerSubject {
-    // CopyOnWriteArrayList is ideal for "rarely changed, often traversed" observer lists
     private final List<ServiceObserver> observers = new CopyOnWriteArrayList<>();
 
     public void addObserver(ServiceObserver observer) {

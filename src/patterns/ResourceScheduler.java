@@ -1,12 +1,13 @@
 package patterns;
 
-import domain.model.*;
-import simulation.*;
+import domain.model.Guide;
+import simulation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ResourceScheduler {
     private volatile static ResourceScheduler instance;
@@ -36,7 +37,6 @@ public class ResourceScheduler {
         for (Guide guide : guides) {
             ReentrantLock lock = guideLocks.get(guide.getId());
 
-            // tryLock prevents the "100k tourist" herd from deadlocking
             if (lock.tryLock()) {
                 try {
                     if (guide.isAvailable(timeSlot)) {
@@ -48,6 +48,20 @@ public class ResourceScheduler {
                 }
             }
         }
-        return null; // No guides available at this time
+        return null;
+    }
+
+    public void releaseGuide(Guide guide, String timeSlot) {
+        if (guide == null) {
+            return;
+        }
+
+        ReentrantLock lock = guideLocks.get(guide.getId());
+        lock.lock();
+        try {
+            guide.releaseTimeSlot(timeSlot);
+        } finally {
+            lock.unlock();
+        }
     }
 }

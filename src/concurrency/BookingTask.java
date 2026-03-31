@@ -20,21 +20,11 @@ public class BookingTask implements Runnable {
     @Override
     public void run() {
         try {
-            // Wait for the signal to start the simulation
             startGate.await();
-
-            // Attempt to browse and book
-            boolean success = bookingService.attemptBooking(touristId);
-
-            if (success) {
-                // Optional: verbose logging for small tests
-                // System.out.println("Tourist " + touristId + " secured a spot!");
-            }
-
+            bookingService.attemptBooking(touristId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            // Signal that this tourist thread has finished its attempt
             endGate.countDown();
         }
     }

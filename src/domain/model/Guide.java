@@ -9,13 +9,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Guide {
     private final int id;
     private final String name;
-    // Stores busy time slots (e.g., "10:00 AM") to prevent double-booking [cite: 4, 9]
     private final Set<String> busySchedule;
 
     public Guide(int id, String name) {
         this.id = id;
         this.name = name;
-        // Thread-safe set to handle concurrent schedule checks
         this.busySchedule = ConcurrentHashMap.newKeySet();
     }
 
@@ -24,10 +22,18 @@ public class Guide {
     }
 
     public boolean bookTimeSlot(String timeSlot) {
-        // add() returns true if the element was not already present
         return busySchedule.add(timeSlot);
     }
 
-    public int getId() { return id; }
-    public String getName() { return name; }
+    public void releaseTimeSlot(String timeSlot) {
+        busySchedule.remove(timeSlot);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
 }
