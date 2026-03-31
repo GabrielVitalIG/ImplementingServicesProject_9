@@ -1,4 +1,4 @@
-package patterns;
+package observerLocalOrganizer;
 
 public interface ServiceObserver {
     // Method to be called when the service updates its status

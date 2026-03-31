@@ -1,4 +1,4 @@
-package patterns;
+package observerLocalOrganizer;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -11,7 +11,10 @@ public class OrganizerSubject {
         observers.add(observer);
     }
 
-    // Method to remove an observer from the list
+    public void  removeObserver(ServiceObserver observer) {
+        observers.remove(observer);
+    }
+
     public void notifyUpdate(int sessionId, String reason, boolean cancel) {
         for (ServiceObserver observer : observers) {
             observer.onServiceUpdate(sessionId, reason, cancel);

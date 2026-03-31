@@ -1,4 +1,4 @@
-package patterns;
+package observerLocalOrganizer;
 
 public class ConsoleServiceObserver implements ServiceObserver {
     /**

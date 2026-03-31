@@ -1,5 +1,4 @@
-package simulation;
-
+import config.Configuration;
 import concurrency.BookingTask;
 import domain.service.BookingService;
 

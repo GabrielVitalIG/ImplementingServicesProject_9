@@ -1,7 +1,7 @@
-package patterns;
+package SingletonResourceScheduler;
 
 import domain.model.Guide;
-import simulation.Configuration;
+import config.*;
 
 import java.util.ArrayList;
 import java.util.List;

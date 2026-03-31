@@ -5,10 +5,10 @@ import domain.model.Guide;
 import domain.model.Reservation;
 import domain.model.Session;
 import logger.SalesLog;
-import patterns.ConsoleServiceObserver;
-import patterns.OrganizerSubject;
-import patterns.ResourceScheduler;
-import simulation.Configuration;
+import observerLocalOrganizer.ConsoleServiceObserver;
+import observerLocalOrganizer.OrganizerSubject;
+import SingletonResourceScheduler.ResourceScheduler;
+import config.Configuration;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +23,7 @@ public class BookingService {
     private final ExpirableCart expirableCart = new ExpirableCart();                                    // Cart for managing temporary reservations with expiration
 
     private final OrganizerSubject organizerSubject = new OrganizerSubject();                           // Subject for notifying observers about session cancellations and capacity updates
+    private final OrganizerService organizerService;
     private final Map<Integer, Session> sessions = new ConcurrentHashMap<>();                           // Thread-safe map to store session information, allowing concurrent access and modifications
     private final ConcurrentLinkedQueue<Reservation> reservations = new ConcurrentLinkedQueue<>();      // Thread-safe queue to store confirmed reservations, allowing concurrent additions without locking
 
@@ -38,6 +39,7 @@ public class BookingService {
 
     public BookingService() {
         organizerSubject.addObserver(new ConsoleServiceObserver());
+        organizerService = new OrganizerService(sessions, organizerSubject);
         initializeSessions();
     }
 
@@ -168,7 +170,6 @@ public class BookingService {
      */
     public void cancelRandomSession(String reason) {
         int sessionId = ThreadLocalRandom.current().nextInt(1, sessions.size() + 1);
-        OrganizerService organizerService = new OrganizerService(sessions, organizerSubject);
         organizerService.cancelSession(sessionId, reason);
     }
 
@@ -181,7 +182,6 @@ public class BookingService {
         int sessionId = ThreadLocalRandom.current().nextInt(1, sessions.size() + 1);
         int newCapacity = ThreadLocalRandom.current().nextInt(500, 2501);
 
-        OrganizerService organizerService = new OrganizerService(sessions, organizerSubject);
         boolean updated = organizerService.updateSessionCapacity(sessionId, newCapacity, reason);
 
         if (updated) {
