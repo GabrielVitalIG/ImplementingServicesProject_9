@@ -17,14 +17,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BookingService {
-    private final ResourceScheduler scheduler = ResourceScheduler.getInstance();
-    private final SalesLog salesLog = new SalesLog();
-    private final PaymentService paymentService = new PaymentService();
-    private final ExpirableCart expirableCart = new ExpirableCart();
+    private final ResourceScheduler scheduler = ResourceScheduler.getInstance();                        // Singleton scheduler for guide management
+    private final SalesLog salesLog = new SalesLog();                                                   // Centralized sales log for recording all transactions
+    private final PaymentService paymentService = new PaymentService();                                 // Service for validating payments
+    private final ExpirableCart expirableCart = new ExpirableCart();                                    // Cart for managing temporary reservations with expiration
 
-    private final OrganizerSubject organizerSubject = new OrganizerSubject();
-    private final Map<Integer, Session> sessions = new ConcurrentHashMap<>();
-    private final ConcurrentLinkedQueue<Reservation> reservations = new ConcurrentLinkedQueue<>();
+    private final OrganizerSubject organizerSubject = new OrganizerSubject();                           // Subject for notifying observers about session cancellations and capacity updates
+    private final Map<Integer, Session> sessions = new ConcurrentHashMap<>();                           // Thread-safe map to store session information, allowing concurrent access and modifications
+    private final ConcurrentLinkedQueue<Reservation> reservations = new ConcurrentLinkedQueue<>();      // Thread-safe queue to store confirmed reservations, allowing concurrent additions without locking
 
     private final AtomicInteger totalRequests = new AtomicInteger(0);
     private final AtomicInteger successfulBookings = new AtomicInteger(0);
@@ -35,11 +35,15 @@ public class BookingService {
     private final AtomicInteger totalPeopleBooked = new AtomicInteger(0);
     private final AtomicInteger organizerCapacityUpdates = new AtomicInteger(0);
 
+
     public BookingService() {
         organizerSubject.addObserver(new ConsoleServiceObserver());
         initializeSessions();
     }
 
+    /**
+     * Initializes the sessions with predefined data. In a real application, this would likely come from a database or external service.
+     */
     private void initializeSessions() {
         sessions.put(1, new Session(1, "Urban Exploration", 50.0, 2000, "10:00 AM", true));
         sessions.put(2, new Session(2, "Museum Ticket", 25.0, 1500, "11:00 AM", false));
@@ -48,6 +52,14 @@ public class BookingService {
         sessions.put(5, new Session(5, "Night City Walk", 30.0, 600, "08:00 PM", true));
     }
 
+
+    /**
+     * Attempts to book a session for a tourist. This method simulates the entire booking process,
+     * including checking session availability, reserving spots, assigning guides if necessary, validating payment,
+     * and confirming the reservation. It also handles various failure scenarios and updates the corresponding metrics.
+     * @param touristId The ID of the tourist attempting to make a booking.
+     * @return true if the booking was successful, false otherwise.
+     */
     public boolean attemptBooking(int touristId) {
         totalRequests.incrementAndGet();
 
@@ -88,6 +100,12 @@ public class BookingService {
                     failedGuide.incrementAndGet();
                     return false;
                 }
+            }
+
+            try {
+                Thread.sleep(ThreadLocalRandom.current().nextInt(20, 80));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
 
             boolean paymentOk = paymentService.validatePayment(touristId, session.getPrice() * groupSize);
@@ -144,12 +162,21 @@ public class BookingService {
         }
     }
 
+    /**
+     * Simulates the cancellation of a random session by an organizer. This method randomly selects a session and cancels it,
+     * @param reason The reason for the cancellation, which will be logged and notified to observers.
+     */
     public void cancelRandomSession(String reason) {
         int sessionId = ThreadLocalRandom.current().nextInt(1, sessions.size() + 1);
         OrganizerService organizerService = new OrganizerService(sessions, organizerSubject);
         organizerService.cancelSession(sessionId, reason);
     }
 
+
+    /**
+     * Simulates an organizer updating the capacity of a random session. This method randomly selects a session and updates its capacity,
+     * @param reason The reason for the capacity update, which will be logged and notified to observers.
+     */
     public void updateRandomSessionCapacity(String reason) {
         int sessionId = ThreadLocalRandom.current().nextInt(1, sessions.size() + 1);
         int newCapacity = ThreadLocalRandom.current().nextInt(500, 2501);
@@ -162,10 +189,17 @@ public class BookingService {
         }
     }
 
+
+    /// Cleans up expired reservations from the expirable cart. This method should be called periodically to ensure that expired reservations are removed and resources are freed up.
     public void cleanupExpiredReservations() {
         expirableCart.cleanupExpired();
     }
 
+    /**
+     * Prints a comprehensive financial report summarizing the booking activity, including total requests,
+     * successful bookings, various failure reasons, total people booked, and details of each session.
+     * This method is useful for analyzing the performance of the booking service and identifying areas for improvement.
+     */
     public void printFinancialReport() {
         System.out.println("===== FINAL REPORT =====");
         System.out.println("Total requests: " + totalRequests.get());
